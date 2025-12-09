@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{title.login}">Đăng nhập</title>
+    <link rel="stylesheet" href="/css/app.css?v=2">
+</head>
+<body class="centered-page">
+<div style="position:absolute; top:12px; right:20px;">
+    <a href="?lang=vi" style="margin-right:8px;">VI</a>
+    <a href="?lang=en">EN</a>
+</div>
+
+<div class="container card">
+    <h2 th:text="#{title.login}">Đăng nhập</h2>
+    <form id="loginForm">
+        <div class="form-group">
+            <label for="username" th:text="#{label.username}">Tên đăng nhập</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password" th:text="#{label.password}">Mật khẩu</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" th:text="#{label.login}">Đăng nhập</button>
+
+        <div id="message" class="message"></div>
+
+        <div class="links mt-12">
+            <p>Chưa có tài khoản? <a href="register.html" th:text="#{label.register_now}">Đăng ký ngay</a></p>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Use relative API path so frontend works regardless of server port
+    const API_URL = '/api';
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const messageDiv = document.getElementById('message');
+
+        try {
+            const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('accessToken', data.accessToken);
+                localStorage.setItem('refreshToken', data.refreshToken);
+                localStorage.setItem('username', data.username);
+                localStorage.setItem('roles', JSON.stringify(data.roles));
+
+                messageDiv.className = 'message success';
+                messageDiv.textContent = 'Đăng nhập thành công!';
+
+                // Redirect based on role
+                if (data.roles.includes('ROLE_ADMIN')) {
+                    setTimeout(() => window.location.href = 'admin.html', 600);
+                } else {
+                    setTimeout(() => window.location.href = 'products.html', 600);
+                }
+            } else {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = data.message || 'Đăng nhập thất bại!';
+            }
+        } catch (error) {
+            messageDiv.className = 'message error';
+            messageDiv.textContent = 'Lỗi kết nối đến server!';
+        }
+    });
+</script>
+</body>
+</html>

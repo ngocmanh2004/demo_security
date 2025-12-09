@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{title.products}">Danh sách sản phẩm</title>
+    <link rel="stylesheet" href="/css/app.css?v=2">
+    <style>
+        /* small overrides for products page */
+        body { }
+    </style>
+</head>
+<body>
+<div class="navbar">
+    <h1 th:text="#{title.home}">Cửa hàng của chúng tôi</h1>
+    <div class="navbar-right">
+        <div style="margin-right:8px; color:#e6eef8;">
+            <a href="?lang=vi" style="margin-right:8px; color:#e6eef8;">VI</a>
+            <a href="?lang=en" style="color:#e6eef8;">EN</a>
+        </div>
+        <div class="user-info">
+            <span id="username"></span>
+        </div>
+        <button class="btn-logout" onclick="logout()" th:text="#{label.logout}">Đăng xuất</button>
+    </div>
+</div>
+
+<div class="container">
+    <h2 th:text="#{title.products}">Danh sách sản phẩm</h2>
+    <div id="loading" class="loading">Đang tải sản phẩm...</div>
+    <div id="error" class="error" style="display: none;"></div>
+    <!-- Category filter pills -->
+    <div id="categoryFilter" class="category-filter"></div>
+    <div id="productsGrid" class="products-grid"></div>
+</div>
+
+<script>
+    // Use relative API path so frontend works regardless of server port
+    const API_URL = '/api';
+
+    // Check authentication
+    function checkAuth() {
+        const token = localStorage.getItem('accessToken');
+        const username = localStorage.getItem('username');
+
+        if (!token) {
+            window.location.href = 'login.html';
+            return false;
+        }
+
+        document.getElementById('username').textContent = username;
+        return true;
+    }
+
+    // Load categories and render as pills
+    async function loadCategories(selectedCategoryId = null) {
+        const filterDiv = document.getElementById('categoryFilter');
+        filterDiv.innerHTML = '';
+        try {
+            const res = await fetch(`${API_URL}/public/products/categories`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+            });
+            if (!res.ok) return;
+            const cats = await res.json();
+
+            // Add an 'All' pill
+            const allPill = document.createElement('div');
+            allPill.className = 'category-pill' + (selectedCategoryId == null ? ' active' : '');
+            allPill.dataset.id = '';
+            allPill.textContent = 'Tất cả';
+            allPill.onclick = () => {
+                setActiveCategory(null);
+                loadProducts();
+            };
+            filterDiv.appendChild(allPill);
+
+            cats.forEach(c => {
+                const pill = document.createElement('div');
+                pill.className = 'category-pill' + (selectedCategoryId === c.productCategoryID ? ' active' : '');
+                pill.dataset.id = String(c.productCategoryID);
+                pill.textContent = c.categoryName || `Category ${c.productCategoryID}`;
+                pill.onclick = () => {
+                    setActiveCategory(c.productCategoryID);
+                    loadProducts(c.productCategoryID);
+                };
+                filterDiv.appendChild(pill);
+            });
+        } catch (e) {
+            console.error('Failed to load categories', e);
+        }
+    }
+
+    function setActiveCategory(id) {
+        const pills = document.querySelectorAll('.category-pill');
+        pills.forEach(p => p.classList.remove('active'));
+        if (id == null) {
+            const first = document.querySelector('.category-pill[data-id=""]');
+            if (first) first.classList.add('active');
+            return;
+        }
+        const selected = document.querySelector('.category-pill[data-id="' + String(id) + '"]');
+        if (selected) selected.classList.add('active');
+    }
+
+    // Load products
+    async function loadProducts(categoryId = null) {
+        if (!checkAuth()) return;
+
+        const loadingDiv = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+        const productsGrid = document.getElementById('productsGrid');
+
+        try {
+            const endpoint = categoryId ? `${API_URL}/public/products/category/${categoryId}` : `${API_URL}/public/products`;
+            // update loading state for category
+            loadingDiv.style.display = 'block';
+            productsGrid.innerHTML = '';
+
+            const response = await fetch(endpoint, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                }
+            });
+
+            if (response.ok) {
+                const products = await response.json();
+                loadingDiv.style.display = 'none';
+
+                if (products.length === 0) {
+                    productsGrid.innerHTML = '<p style="text-align:center; color:#666;">Chưa có sản phẩm nào.</p>';
+                    return;
+                }
+
+                productsGrid.innerHTML = products.map(product => `
+                    <div class="product-card">
+                        <div class="product-image">
+                            ${product.imageUrl ?
+                                `<img src="${product.imageUrl}" alt="${product.productName}">` :
+                                '📦 No Image'}
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">${product.productName || 'Sản phẩm'}</div>
+                            <div class="product-description">
+                                ${product.description || 'Không có mô tả'}
+                            </div>
+                            <div class="product-footer">
+                                <div class="product-price">
+                                    ${product.price ? Number(product.price).toLocaleString('vi-VN') + ' ₫' : 'Liên hệ'}
+                                </div>
+                                <div class="product-stock">
+                                    Kho: ${product.stockQuantity || 0}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else if (response.status === 401) {
+                window.location.href = 'login.html';
+            } else {
+                throw new Error('Failed to load products');
+            }
+        } catch (error) {
+            loadingDiv.style.display = 'none';
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = 'Không thể tải danh sách sản phẩm!';
+            console.error(error);
+        }
+    }
+
+    // Logout
+    async function logout() {
+        const refreshToken = localStorage.getItem('refreshToken');
+
+        try {
+            await fetch(`${API_URL}/auth/logout`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ refreshToken })
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
+
+    // Initialize: load categories first then products
+    (async function init() {
+        if (!checkAuth()) return;
+        await loadCategories();
+        await loadProducts();
+    })();
+</script>
+</body>
+</html>

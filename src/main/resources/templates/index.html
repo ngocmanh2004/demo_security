@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{title.home}">Spring Security Demo - Trang chủ</title>
+    <link rel="stylesheet" href="/css/app.css?v=2">
+</head>
+<body>
+<div class="hero">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <h1 th:text="#{title.home}">Spring Security Demo</h1>
+            <p class="subtitle">Hệ thống quản lý sản phẩm với JWT Authentication</p>
+        </div>
+        <div>
+            <a href="?lang=vi" style="margin-right:8px;">VI</a>
+            <a href="?lang=en">EN</a>
+        </div>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div class="features">
+        <h3>Tính năng</h3>
+        <div class="feature-item">JWT Authentication (Access Token + Refresh Token)</div>
+        <div class="feature-item">Phân quyền User và Admin</div>
+        <div class="feature-item">CRUD sản phẩm (Admin only)</div>
+        <div class="feature-item">Xem danh sách sản phẩm (All users)</div>
+        <div class="feature-item">Bảo mật với BCrypt password</div>
+        <div class="feature-item">RESTful API</div>
+    </div>
+
+    <div class="buttons" id="authButtons">
+        <a href="login.html" class="btn btn-primary" th:text="#{label.login}">Đăng nhập</a>
+        <a href="register.html" class="btn btn-secondary" th:text="#{title.register}">Đăng ký</a>
+    </div>
+
+    <div class="buttons" id="userButtons" style="display: none;">
+        <a href="products.html" class="btn btn-primary">Xem sản phẩm</a>
+        <a href="admin.html" class="btn btn-primary" id="adminBtn" style="display: none;">Quản lý (Admin)</a>
+        <button class="btn btn-secondary" onclick="logout()" th:text="#{label.logout}">Đăng xuất</button>
+    </div>
+</div>
+
+<script>
+    // Check if user is logged in
+    function checkAuth() {
+        const token = localStorage.getItem('accessToken');
+        const username = localStorage.getItem('username');
+        const roles = JSON.parse(localStorage.getItem('roles') || '[]');
+
+        const statusDiv = document.getElementById('status');
+        const authButtons = document.getElementById('authButtons');
+        const userButtons = document.getElementById('userButtons');
+        const adminBtn = document.getElementById('adminBtn');
+
+        if (token && username) {
+            statusDiv.className = 'status logged-in';
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = `👤 Xin chào, <strong>${username}</strong>! Bạn đang đăng nhập.`;
+
+            authButtons.style.display = 'none';
+            userButtons.style.display = 'flex';
+
+            if (roles.includes('ROLE_ADMIN')) {
+                adminBtn.style.display = 'inline-block';
+            }
+        } else {
+            statusDiv.className = 'status logged-out';
+            statusDiv.style.display = 'block';
+            statusDiv.textContent = 'Bạn chưa đăng nhập. Vui lòng đăng nhập để tiếp tục.';
+
+            authButtons.style.display = 'flex';
+            userButtons.style.display = 'none';
+        }
+    }
+
+    function logout() {
+        if (confirm('Bạn có chắc muốn đăng xuất?')) {
+            localStorage.clear();
+            window.location.reload();
+        }
+    }
+
+    // Check auth status on page load
+    checkAuth();
+</script>
+</body>
+</html>

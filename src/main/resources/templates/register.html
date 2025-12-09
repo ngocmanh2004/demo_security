@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{title.register}">Đăng ký</title>
+    <link rel="stylesheet" href="/css/app.css?v=2">
+</head>
+<body class="centered-page">
+<div style="position:absolute; top:12px; right:20px;">
+    <a href="?lang=vi" style="margin-right:8px;">VI</a>
+    <a href="?lang=en">EN</a>
+</div>
+
+<div class="container card">
+    <h2 th:text="#{title.register}">Đăng ký</h2>
+    <form id="registerForm">
+        <div class="form-group">
+            <label for="username">Tên đăng nhập *</label>
+            <input type="text" id="username" name="username" required
+                   pattern="[a-zA-Z0-9_]{3,50}"
+                   title="3-50 ký tự, chỉ chữ, số và dấu gạch dưới">
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email *</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+
+        <div class="form-group">
+            <label for="fullName">Họ và tên *</label>
+            <input type="text" id="fullName" name="fullName" required minlength="2" maxlength="100">
+        </div>
+
+        <div class="form-group">
+            <label for="password">Mật khẩu *</label>
+            <input type="password" id="password" name="password" required minlength="6">
+        </div>
+
+        <div class="form-group">
+            <label for="confirmPassword">Xác nhận mật khẩu *</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" th:text="#{title.register}">Đăng ký</button>
+
+        <div id="message" class="message"></div>
+
+        <div class="links mt-12">
+            <p>Đã có tài khoản? <a href="login.html" th:text="#{label.login}">Đăng nhập</a></p>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Use relative API path so frontend works regardless of server port
+    const API_URL = '/api';
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = {
+            username: document.getElementById('username').value,
+            email: document.getElementById('email').value,
+            fullName: document.getElementById('fullName').value,
+            password: document.getElementById('password').value,
+            confirmPassword: document.getElementById('confirmPassword').value
+        };
+
+        const messageDiv = document.getElementById('message');
+
+        // Validate passwords match
+        if (formData.password !== formData.confirmPassword) {
+            messageDiv.className = 'message error';
+            messageDiv.textContent = 'Mật khẩu không khớp!';
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                messageDiv.className = 'message success';
+                messageDiv.textContent = 'Đăng ký thành công! Bạn có thể đăng nhập ngay.';
+                setTimeout(() => window.location.href = 'login.html', 900);
+            } else {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = data.message || 'Đăng ký thất bại!';
+            }
+        } catch (error) {
+            messageDiv.className = 'message error';
+            messageDiv.textContent = 'Lỗi kết nối đến server!';
+        }
+    });
+</script>
+</body>
+</html>
