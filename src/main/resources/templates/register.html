@@ -7,10 +7,7 @@
     <link rel="stylesheet" href="/css/app.css?v=2">
 </head>
 <body class="centered-page">
-<div style="position:absolute; top:12px; right:20px;">
-    <a href="?lang=vi" style="margin-right:8px;">VI</a>
-    <a href="?lang=en">EN</a>
-</div>
+
 
 <div class="container card">
     <h2 th:text="#{title.register}">Đăng ký</h2>
@@ -19,12 +16,12 @@
             <label for="username">Tên đăng nhập *</label>
             <input type="text" id="username" name="username" required
                    pattern="[a-zA-Z0-9_]{3,50}"
-                   title="3-50 ký tự, chỉ chữ, số và dấu gạch dưới">
+                   title="3-50 ký tự, chỉ chữ, số và dấu gạch dưới" autocomplete="username">
         </div>
 
         <div class="form-group">
             <label for="email">Email *</label>
-            <input type="email" id="email" name="email" required>
+            <input type="email" id="email" name="email" required autocomplete="email">
         </div>
 
         <div class="form-group">
@@ -34,12 +31,12 @@
 
         <div class="form-group">
             <label for="password">Mật khẩu *</label>
-            <input type="password" id="password" name="password" required minlength="6">
+            <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password">
         </div>
 
         <div class="form-group">
             <label for="confirmPassword">Xác nhận mật khẩu *</label>
-            <input type="password" id="confirmPassword" name="confirmPassword" required>
+            <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password">
         </div>
 
         <button type="submit" class="btn btn-primary" th:text="#{title.register}">Đăng ký</button>
@@ -53,6 +50,17 @@
 </div>
 
 <script>
+        // Hiển thị tên người dùng và vai trò nếu đã đăng nhập
+        (function showUserHeader() {
+            const username = localStorage.getItem('username') || '';
+            const roles = JSON.parse(localStorage.getItem('roles') || '[]');
+            let roleText = '';
+            if (roles.includes('ROLE_ADMIN')) roleText = 'Admin';
+            else if (roles.includes('ROLE_MANAGER')) roleText = 'Quản lý';
+            else if (roles.includes('ROLE_USER')) roleText = 'Người dùng';
+            if (document.getElementById('username')) document.getElementById('username').textContent = username;
+            if (document.getElementById('role')) document.getElementById('role').textContent = roleText;
+        })();
     // Use relative API path so frontend works regardless of server port
     const API_URL = '/api';
 

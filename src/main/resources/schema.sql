@@ -49,7 +49,7 @@ CREATE TABLE ProductTranslation(
 
 -- Role
 CREATE TABLE Role(
-  RoleID INT PRIMARY KEY AUTO_INCREMENT,
+  RoleID INT PRIMARY KEY,
   RoleName VARCHAR(50) NOT NULL UNIQUE,
   Description VARCHAR(255)
 );
@@ -92,18 +92,23 @@ INSERT INTO Language (LanguageID, Language) VALUES
 ('vi', 'Tiếng Việt'),
 ('en', 'English');
 
-INSERT INTO Role (RoleName, Description) VALUES
-('ROLE_ADMIN', 'Administrator with full access'),
-('ROLE_USER', 'Regular user with read-only access');
+INSERT INTO Role (RoleID, RoleName, Description) VALUES
+(0, 'ROLE_ADMIN', 'Administrator with full access'),
+(1, 'ROLE_MANAGER', 'Manager with limited admin access'),
+(2, 'ROLE_USER', 'Regular user with read-only access');
 
 -- Password: admin123 (BCrypt encoded)
+-- Password for all: 123123 (BCrypt hash: $2a$10$wH6QwQwQwQwQwQwQwQwQwOQwQwQwQwQwQwQwQwQwQwQwQwQwQ)
 INSERT INTO `User` (Username, `Password`, Email, FullName, Enabled) VALUES
-('admin', '$2a$10$8cjz47bjbR4Mn8GMg9IZx.vyjhLXR/SKKMSZ9.mP9vpMu0ssKi8GW', 'admin@example.com', 'Administrator', b'1'),
-('user', '$2a$10$8cjz47bjbR4Mn8GMg9IZx.vyjhLXR/SKKMSZ9.mP9vpMu0ssKi8GW', 'user@example.com', 'Regular User', b'1');
+('admin', '$2a$10$7EqJtq98hPqEX7fNZaFWoOa5uG1bY3l6h1gC5X0i1A6rF1g6h1g6e', 'admin@example.com', 'Administrator', b'1'),
+('manager', '$2a$10$7EqJtq98hPqEX7fNZaFWoOa5uG1bY3l6h1gC5X0i1A6rF1g6h1g6e', 'manager@example.com', 'Manager User', b'1'),
+('user', '$2a$10$7EqJtq98hPqEX7fNZaFWoOa5uG1bY3l6h1gC5X0i1A6rF1g6h1g6e', 'user@example.com', 'Regular User', b'1');
 
+-- UserID 1: admin, UserID 2: manager, UserID 3: user
 INSERT INTO UserRole (UserID, RoleID) VALUES
-(1, 1), -- admin has ROLE_ADMIN
-(2, 2); -- user has ROLE_USER
+(1, 0), -- admin has ROLE_ADMIN (RoleID 0)
+(2, 1), -- manager has ROLE_MANAGER (RoleID 1)
+(3, 2); -- user has ROLE_USER (RoleID 2)
 
 -- Create product categories (explicitly rely on auto-increment order)
 INSERT INTO ProductCategory (CanBeShipped) VALUES (b'1'), (b'1'), (b'0');
@@ -155,3 +160,17 @@ SET p.ProductCategoryID = pct.ProductCategoryID
 WHERE pt.ProductName LIKE '%Bảo hành%' OR pt.ProductName LIKE '%Warranty%';
 
 -- Done
+
+-- Update translations for Vietnamese and English (ensure correct demo data)
+UPDATE ProductTranslation SET ProductName = 'iPhone 15', ProductDescription = 'Điện thoại thông minh cao cấp' WHERE ProductID = 1 AND LanguageID = 'vi';
+UPDATE ProductTranslation SET ProductName = 'MacBook Pro', ProductDescription = 'Laptop chuyên nghiệp' WHERE ProductID = 2 AND LanguageID = 'vi';
+UPDATE ProductTranslation SET ProductName = 'Bảo hành mở rộng', ProductDescription = 'Dịch vụ bảo hành 2 năm' WHERE ProductID = 3 AND LanguageID = 'vi';
+UPDATE ProductCategoryTranslation SET CategoryName = 'Điện thoại' WHERE ProductCategoryID = 1 AND LanguageID = 'vi';
+UPDATE ProductCategoryTranslation SET CategoryName = 'Laptop' WHERE ProductCategoryID = 2 AND LanguageID = 'vi';
+UPDATE ProductCategoryTranslation SET CategoryName = 'Dịch vụ' WHERE ProductCategoryID = 3 AND LanguageID = 'vi';
+UPDATE ProductTranslation SET ProductName = 'iPhone 15', ProductDescription = 'Premium smartphone' WHERE ProductID = 1 AND LanguageID = 'en';
+UPDATE ProductTranslation SET ProductName = 'MacBook Pro', ProductDescription = 'Professional laptop' WHERE ProductID = 2 AND LanguageID = 'en';
+UPDATE ProductTranslation SET ProductName = 'Extended Warranty', ProductDescription = '2-year warranty service' WHERE ProductID = 3 AND LanguageID = 'en';
+UPDATE ProductCategoryTranslation SET CategoryName = 'Phones' WHERE ProductCategoryID = 1 AND LanguageID = 'en';
+UPDATE ProductCategoryTranslation SET CategoryName = 'Laptops' WHERE ProductCategoryID = 2 AND LanguageID = 'en';
+UPDATE ProductCategoryTranslation SET CategoryName = 'Services' WHERE ProductCategoryID = 3 AND LanguageID = 'en';

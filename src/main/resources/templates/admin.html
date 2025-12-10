@@ -19,7 +19,10 @@
             <a href="?lang=vi" style="margin-right:8px; color: #e6eef8">VI</a>
             <a href="?lang=en" style="color: #e6eef8">EN</a>
         </div>
-        <span id="username"></span>
+        <div class="user-info" style="color:#e6eef8; margin-right:8px;">
+            <span id="username"></span>
+            <span id="role" style="font-size:13px; margin-left:6px; background:rgba(255,255,255,0.08); padding:2px 8px; border-radius:8px;"></span>
+        </div>
         <button class="btn-logout" onclick="logout()" th:text="#{label.logout}">Đăng xuất</button>
     </div>
 </div>
@@ -38,12 +41,12 @@
             <table id="productsTable" style="display: none;">
                 <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Tên sản phẩm</th>
-                    <th>Giá</th>
-                    <th>Số lượng</th>
-                    <th>Danh mục</th>
-                    <th>Thao tác</th>
+                    <th id="th-id">ID</th>
+                    <th id="th-name">Tên sản phẩm</th>
+                    <th id="th-price">Giá</th>
+                    <th id="th-stock">Số lượng</th>
+                    <th id="th-category">Danh mục</th>
+                    <th id="th-action">Thao tác</th>
                 </tr>
                 </thead>
                 <tbody id="productsBody"></tbody>
@@ -101,32 +104,52 @@
 </div>
 
 <script>
+        // Set table headers based on language
+        function setTableHeaders() {
+            const lang = window.currentLang || 'vi';
+            document.getElementById('th-id').textContent = 'ID';
+            document.getElementById('th-name').textContent = lang === 'en' ? 'Product Name' : 'Tên sản phẩm';
+            document.getElementById('th-price').textContent = lang === 'en' ? 'Price' : 'Giá';
+            document.getElementById('th-stock').textContent = lang === 'en' ? 'Stock' : 'Số lượng';
+            document.getElementById('th-category').textContent = lang === 'en' ? 'Category' : 'Danh mục';
+            document.getElementById('th-action').textContent = lang === 'en' ? 'Actions' : 'Thao tác';
+        }
     const API_URL = '/api';
 
     function checkAuth() {
         const token = localStorage.getItem('accessToken');
         const roles = JSON.parse(localStorage.getItem('roles') || '[]');
+        const username = localStorage.getItem('username') || 'Admin';
+        // Detect language from URL param or default to 'vi'
+        const urlParams = new URLSearchParams(window.location.search);
+        const lang = urlParams.get('lang') || 'vi';
+        let roleText = 'Admin';
+        if (roles.includes('ROLE_ADMIN')) roleText = lang === 'en' ? 'Admin' : 'Quản trị viên';
+        else if (roles.includes('ROLE_MANAGER')) roleText = lang === 'en' ? 'Manager' : 'Quản lý';
+        else if (roles.includes('ROLE_USER')) roleText = lang === 'en' ? 'User' : 'Người dùng';
 
-        console.log('Token:', token);
-        console.log('Roles:', roles);
+        // Hiển thị thông tin người dùng và vai trò ở header
+        if (document.getElementById('username')) document.getElementById('username').textContent = username;
+        if (document.getElementById('role')) document.getElementById('role').textContent = roleText;
 
         if (!token || !roles.includes('ROLE_ADMIN')) {
             console.warn('Not authenticated or not admin, redirecting to login');
             window.location.href = 'login.html';
             return false;
         }
-
-        document.getElementById('username').textContent = localStorage.getItem('username') || 'Admin';
+        // Store lang for use in other functions
+        window.currentLang = lang;
+        setTableHeaders();
         return true;
     }
 
     async function loadProducts() {
         if (!checkAuth()) return;
+        setTableHeaders();
 
         try {
-            console.log('Fetching products from:', `${API_URL}/public/products`);
-
-            const response = await fetch(`${API_URL}/public/products`, {
+            const lang = window.currentLang || 'vi';
+            const response = await fetch(`${API_URL}/public/products?lang=${lang}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -134,29 +157,23 @@
                 }
             });
 
-            console.log('Response status:', response.status);
-            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
             if (response.ok) {
                 const products = await response.json();
-                console.log('Products loaded:', products);
                 displayProducts(products);
             } else {
                 const errorText = await response.text();
-                console.error('Error response:', errorText);
-
                 if (response.status === 401) {
-                    showMessage('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!', 'error');
+                    showMessage(lang === 'en' ? 'Session expired. Please login again!' : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!', 'error');
                     setTimeout(() => {
                         window.location.href = 'login.html';
                     }, 2000);
                 } else {
-                    showMessage(`Không thể tải danh sách sản phẩm! (Status: ${response.status})`, 'error');
+                    showMessage((lang === 'en' ? `Cannot load product list! (Status: ${response.status})` : `Không thể tải danh sách sản phẩm! (Status: ${response.status})`), 'error');
                 }
             }
         } catch (error) {
-            console.error('Fetch error:', error);
-            showMessage('Lỗi kết nối! Kiểm tra console để biết thêm chi tiết.', 'error');
+            const lang = window.currentLang || 'vi';
+            showMessage(lang === 'en' ? 'Connection error! See console for details.' : 'Lỗi kết nối! Kiểm tra console để biết thêm chi tiết.', 'error');
         }
     }
 
@@ -164,24 +181,25 @@
         document.getElementById('loading').style.display = 'none';
         const table = document.getElementById('productsTable');
         const tbody = document.getElementById('productsBody');
+        const lang = window.currentLang || 'vi';
 
         table.style.display = 'table';
 
         if (!products || products.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Chưa có sản phẩm nào</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">${lang === 'en' ? 'No products yet' : 'Chưa có sản phẩm nào'}</td></tr>`;
             return;
         }
 
         tbody.innerHTML = products.map(p => `
             <tr>
                 <td>${p.productID}</td>
-                <td>${p.productName || 'N/A'}</td>
-                <td>${p.price ? Number(p.price).toLocaleString('vi-VN') + ' ₫' : 'N/A'}</td>
+                <td>${p.productName || (lang === 'en' ? 'N/A' : 'Không có tên')}</td>
+                <td>${p.price ? Number(p.price).toLocaleString(lang === 'en' ? 'en-US' : 'vi-VN') + ' ₫' : (lang === 'en' ? 'N/A' : 'Không rõ')}</td>
                 <td>${p.stockQuantity || 0}</td>
-                <td>${p.categoryName || 'N/A'}</td>
+                <td>${p.categoryName || (lang === 'en' ? 'N/A' : 'Không rõ')}</td>
                 <td class="actions">
-                    <button class="btn-edit" onclick="editProduct(${p.productID})">Sửa</button>
-                    <button class="btn-delete" onclick="deleteProduct(${p.productID})">Xóa</button>
+                    <button class="btn-edit" onclick="editProduct(${p.productID})">${lang === 'en' ? 'Edit' : 'Sửa'}</button>
+                    <button class="btn-delete" onclick="deleteProduct(${p.productID})">${lang === 'en' ? 'Delete' : 'Xóa'}</button>
                 </td>
             </tr>
         `).join('');
@@ -190,9 +208,10 @@
     function openModal(product = null) {
         const modal = document.getElementById('productModal');
         const title = document.getElementById('modalTitle');
+        const lang = window.currentLang || 'vi';
 
         if (product) {
-            title.textContent = 'Sửa sản phẩm';
+            title.textContent = lang === 'en' ? 'Edit product' : 'Sửa sản phẩm';
             document.getElementById('productId').value = product.productID;
             document.getElementById('price').value = product.price;
             document.getElementById('productName').value = product.productName || '';
@@ -200,7 +219,7 @@
             document.getElementById('stockQuantity').value = product.stockQuantity;
             document.getElementById('imageUrl').value = product.imageUrl || '';
         } else {
-            title.textContent = 'Thêm sản phẩm mới';
+            title.textContent = lang === 'en' ? 'Add new product' : 'Thêm sản phẩm mới';
             document.getElementById('productForm').reset();
             document.getElementById('productId').value = '';
         }
@@ -220,7 +239,8 @@
 
     async function editProduct(id) {
         try {
-            const response = await fetch(`${API_URL}/public/products/${id}`, {
+            const lang = window.currentLang || 'vi';
+            const response = await fetch(`${API_URL}/public/products/${id}?lang=${lang}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
                 }
@@ -230,16 +250,16 @@
                 const product = await response.json();
                 openModal(product);
             } else {
-                showMessage('Không thể tải thông tin sản phẩm!', 'error');
+                showMessage(lang === 'en' ? 'Cannot load product info!' : 'Không thể tải thông tin sản phẩm!', 'error');
             }
         } catch (error) {
-            console.error('Edit product error:', error);
-            showMessage('Lỗi khi tải thông tin sản phẩm!', 'error');
+            showMessage((window.currentLang === 'en' ? 'Error loading product info!' : 'Lỗi khi tải thông tin sản phẩm!'), 'error');
         }
     }
 
     async function deleteProduct(id) {
-        if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
+        const lang = window.currentLang || 'vi';
+        if (!confirm(lang === 'en' ? 'Are you sure you want to delete this product?' : 'Bạn có chắc muốn xóa sản phẩm này?')) return;
 
         try {
             const response = await fetch(`${API_URL}/admin/products/${id}`, {
@@ -250,14 +270,13 @@
             });
 
             if (response.ok) {
-                showMessage('Xóa sản phẩm thành công!', 'success');
+                showMessage(lang === 'en' ? 'Product deleted successfully!' : 'Xóa sản phẩm thành công!', 'success');
                 loadProducts();
             } else {
-                showMessage('Không thể xóa sản phẩm!', 'error');
+                showMessage(lang === 'en' ? 'Cannot delete product!' : 'Không thể xóa sản phẩm!', 'error');
             }
         } catch (error) {
-            console.error('Delete error:', error);
-            showMessage('Lỗi khi xóa sản phẩm!', 'error');
+            showMessage(lang === 'en' ? 'Error deleting product!' : 'Lỗi khi xóa sản phẩm!', 'error');
         }
     }
 
@@ -325,8 +344,10 @@
     }
 
     async function loadCategories() {
+        setTableHeaders();
         try {
-            const res = await fetch(`${API_URL}/public/products/categories`, {
+            const lang = window.currentLang || 'vi';
+            const res = await fetch(`${API_URL}/public/products/categories?lang=${lang}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
                 }
@@ -334,10 +355,9 @@
 
             if (res.ok) {
                 const cats = await res.json();
-                console.log('Categories loaded:', cats);
                 const sel = document.getElementById('categorySelect');
                 sel.innerHTML = cats.map(c =>
-                    `<option value="${c.productCategoryID}">${c.categoryName || ('Category '+c.productCategoryID)}</option>`
+                    `<option value="${c.productCategoryID}">${c.categoryName || (lang === 'en' ? 'Category ' + c.productCategoryID : 'Danh mục ' + c.productCategoryID)}</option>`
                 ).join('');
             } else {
                 console.error('Failed to load categories, status:', res.status);

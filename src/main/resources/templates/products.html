@@ -18,8 +18,9 @@
             <a href="?lang=vi" style="margin-right:8px; color:#e6eef8;">VI</a>
             <a href="?lang=en" style="color:#e6eef8;">EN</a>
         </div>
-        <div class="user-info">
+        <div class="user-info" style="color:#e6eef8; margin-right:8px;">
             <span id="username"></span>
+            <span id="role" style="font-size:13px; margin-left:6px; background:rgba(255,255,255,0.08); padding:2px 8px; border-radius:8px;"></span>
         </div>
         <button class="btn-logout" onclick="logout()" th:text="#{label.logout}">Đăng xuất</button>
     </div>
@@ -41,14 +42,25 @@
     // Check authentication
     function checkAuth() {
         const token = localStorage.getItem('accessToken');
-        const username = localStorage.getItem('username');
+        const roles = JSON.parse(localStorage.getItem('roles') || '[]');
+        const username = localStorage.getItem('username') || '';
+        // Detect language from URL param or default to 'vi'
+        const urlParams = new URLSearchParams(window.location.search);
+        const lang = urlParams.get('lang') || 'vi';
+        let roleText = '';
+        if (roles.includes('ROLE_ADMIN')) roleText = lang === 'en' ? 'Admin' : 'Quản trị viên';
+        else if (roles.includes('ROLE_MANAGER')) roleText = lang === 'en' ? 'Manager' : 'Quản lý';
+        else if (roles.includes('ROLE_USER')) roleText = lang === 'en' ? 'User' : 'Người dùng';
+
+        if (document.getElementById('username')) document.getElementById('username').textContent = username;
+        if (document.getElementById('role')) document.getElementById('role').textContent = roleText;
 
         if (!token) {
             window.location.href = 'login.html';
             return false;
         }
-
-        document.getElementById('username').textContent = username;
+        // Store lang for use in other functions
+        window.currentLang = lang;
         return true;
     }
 
@@ -57,7 +69,8 @@
         const filterDiv = document.getElementById('categoryFilter');
         filterDiv.innerHTML = '';
         try {
-            const res = await fetch(`${API_URL}/public/products/categories`, {
+            const lang = window.currentLang || 'vi';
+            const res = await fetch(`${API_URL}/public/products/categories?lang=${lang}`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
             });
             if (!res.ok) return;
@@ -67,7 +80,7 @@
             const allPill = document.createElement('div');
             allPill.className = 'category-pill' + (selectedCategoryId == null ? ' active' : '');
             allPill.dataset.id = '';
-            allPill.textContent = 'Tất cả';
+            allPill.textContent = lang === 'en' ? 'All' : 'Tất cả';
             allPill.onclick = () => {
                 setActiveCategory(null);
                 loadProducts();
@@ -78,7 +91,7 @@
                 const pill = document.createElement('div');
                 pill.className = 'category-pill' + (selectedCategoryId === c.productCategoryID ? ' active' : '');
                 pill.dataset.id = String(c.productCategoryID);
-                pill.textContent = c.categoryName || `Category ${c.productCategoryID}`;
+                pill.textContent = c.categoryName || (lang === 'en' ? `Category ${c.productCategoryID}` : `Danh mục ${c.productCategoryID}`);
                 pill.onclick = () => {
                     setActiveCategory(c.productCategoryID);
                     loadProducts(c.productCategoryID);
@@ -111,7 +124,8 @@
         const productsGrid = document.getElementById('productsGrid');
 
         try {
-            const endpoint = categoryId ? `${API_URL}/public/products/category/${categoryId}` : `${API_URL}/public/products`;
+            const lang = window.currentLang || 'vi';
+            const endpoint = categoryId ? `${API_URL}/public/products/category/${categoryId}?lang=${lang}` : `${API_URL}/public/products?lang=${lang}`;
             // update loading state for category
             loadingDiv.style.display = 'block';
             productsGrid.innerHTML = '';
@@ -127,7 +141,7 @@
                 loadingDiv.style.display = 'none';
 
                 if (products.length === 0) {
-                    productsGrid.innerHTML = '<p style="text-align:center; color:#666;">Chưa có sản phẩm nào.</p>';
+                    productsGrid.innerHTML = `<p style="text-align:center; color:#666;">${lang === 'en' ? 'No products yet.' : 'Chưa có sản phẩm nào.'}</p>`;
                     return;
                 }
 
@@ -136,19 +150,19 @@
                         <div class="product-image">
                             ${product.imageUrl ?
                                 `<img src="${product.imageUrl}" alt="${product.productName}">` :
-                                '📦 No Image'}
+                                (lang === 'en' ? '📦 No Image' : '📦 Không có ảnh')}
                         </div>
                         <div class="product-info">
-                            <div class="product-name">${product.productName || 'Sản phẩm'}</div>
+                            <div class="product-name">${product.productName || (lang === 'en' ? 'Product' : 'Sản phẩm')}</div>
                             <div class="product-description">
-                                ${product.description || 'Không có mô tả'}
+                                ${product.description || (lang === 'en' ? 'No description' : 'Không có mô tả')}
                             </div>
                             <div class="product-footer">
                                 <div class="product-price">
-                                    ${product.price ? Number(product.price).toLocaleString('vi-VN') + ' ₫' : 'Liên hệ'}
+                                    ${product.price ? Number(product.price).toLocaleString(lang === 'en' ? 'en-US' : 'vi-VN') + (lang === 'en' ? ' ₫' : ' ₫') : (lang === 'en' ? 'Contact' : 'Liên hệ')}
                                 </div>
                                 <div class="product-stock">
-                                    Kho: ${product.stockQuantity || 0}
+                                    ${lang === 'en' ? 'Stock' : 'Kho'}: ${product.stockQuantity || 0}
                                 </div>
                             </div>
                         </div>
@@ -162,7 +176,7 @@
         } catch (error) {
             loadingDiv.style.display = 'none';
             errorDiv.style.display = 'block';
-            errorDiv.textContent = 'Không thể tải danh sách sản phẩm!';
+            errorDiv.textContent = (window.currentLang === 'en' ? 'Cannot load product list!' : 'Không thể tải danh sách sản phẩm!');
             console.error(error);
         }
     }

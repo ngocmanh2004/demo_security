@@ -1,3 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+:root {
+  --font-main: 'Roboto', 'Segoe UI', 'Arial', 'Helvetica Neue', 'sans-serif';
+  --font-weight-normal: 400;
+  --font-weight-bold: 700;
+}
+body {
+  font-family: var(--font-main);
+  font-weight: var(--font-weight-normal);
+  background: var(--page-bg);
+  color: var(--text);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 /* Professional e-commerce stylesheet
    - Light, neutral background for pages
    - Dark, minimal header (accent) to keep contrast
@@ -44,7 +59,7 @@ body{
   color:#fff; border-bottom: 1px solid rgba(255,255,255,0.04);
   box-shadow: 0 1px 0 rgba(255,255,255,0.02) inset;
 }
-.navbar h1{ margin:0; font-size:18px; font-weight:700; color:#fff; }
+.navbar h1{ margin:0; font-size:18px; font-weight:var(--font-weight-bold); color:#fff; font-family: var(--font-main); }
 .navbar a{ color: #e6eef8; text-decoration:none }
 .navbar-right{ display:flex; gap:12px; align-items:center }
 .btn-logout{ background:transparent; border:1px solid rgba(255,255,255,0.06); color:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
@@ -76,10 +91,10 @@ input::placeholder{ color: #9aa3ad }
 .product-image{ height:140px; display:flex; align-items:center; justify-content:center; background:var(--muted-bg) }
 .product-image img{ max-width:100%; max-height:100%; object-fit:cover }
 .product-info{ padding:14px; display:flex; flex-direction:column; gap:8px }
-.product-name{ font-weight:700; color:var(--text); font-size:15px }
-.product-description{ color:var(--muted); font-size:13px; min-height:36px }
+.product-name{ font-weight:var(--font-weight-bold); color:var(--text); font-size:15px; font-family: var(--font-main); }
+.product-description{ color:var(--muted); font-size:13px; min-height:36px; font-family: var(--font-main); }
 .product-footer{ display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-top:1px solid rgba(15,23,36,0.03) }
-.product-price{ color:var(--accent); font-weight:800 }
+.product-price{ color:var(--accent); font-weight:var(--font-weight-bold); font-family: var(--font-main); }
 
 /* Category pills */
 .category-filter{ display:flex; gap:8px; flex-wrap:wrap }

@@ -7,15 +7,25 @@
     <link rel="stylesheet" href="/css/app.css?v=2">
 </head>
 <body>
+<div class="navbar">
+    <h1 th:text="#{{title.home}}">Spring Security Demo</h1>
+    <div class="navbar-right">
+        <div style="margin-right:8px; color:#e6eef8;">
+            <a href="?lang=vi" style="margin-right:8px; color:#e6eef8;">VI</a>
+            <a href="?lang=en" style="color:#e6eef8;">EN</a>
+        </div>
+        <div class="user-info" style="color:#e6eef8; margin-right:8px;">
+            <span id="username"></span>
+            <span id="role" style="font-size:13px; margin-left:6px; background:rgba(255,255,255,0.08); padding:2px 8px; border-radius:8px;"></span>
+        </div>
+        <button class="btn-logout" onclick="logout()" th:text="#{label.logout}">Đăng xuất</button>
+    </div>
+</div>
 <div class="hero">
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
-            <h1 th:text="#{title.home}">Spring Security Demo</h1>
+            <h1 th:text="#{{title.home}}">Spring Security Demo</h1>
             <p class="subtitle">Hệ thống quản lý sản phẩm với JWT Authentication</p>
-        </div>
-        <div>
-            <a href="?lang=vi" style="margin-right:8px;">VI</a>
-            <a href="?lang=en">EN</a>
         </div>
     </div>
 
@@ -45,36 +55,43 @@
 
 <script>
     // Check if user is logged in
-    function checkAuth() {
-        const token = localStorage.getItem('accessToken');
-        const username = localStorage.getItem('username');
-        const roles = JSON.parse(localStorage.getItem('roles') || '[]');
+        function checkAuth() {
+            const token = localStorage.getItem('accessToken');
+            const username = localStorage.getItem('username');
+            const roles = JSON.parse(localStorage.getItem('roles') || '[]');
+            let roleText = '';
+            if (roles.includes('ROLE_ADMIN')) roleText = 'Admin';
+            else if (roles.includes('ROLE_MANAGER')) roleText = 'Quản lý';
+            else if (roles.includes('ROLE_USER')) roleText = 'Người dùng';
 
-        const statusDiv = document.getElementById('status');
-        const authButtons = document.getElementById('authButtons');
-        const userButtons = document.getElementById('userButtons');
-        const adminBtn = document.getElementById('adminBtn');
+            if (document.getElementById('username')) document.getElementById('username').textContent = username || '';
+            if (document.getElementById('role')) document.getElementById('role').textContent = roleText;
 
-        if (token && username) {
-            statusDiv.className = 'status logged-in';
-            statusDiv.style.display = 'block';
-            statusDiv.innerHTML = `👤 Xin chào, <strong>${username}</strong>! Bạn đang đăng nhập.`;
+            const statusDiv = document.getElementById('status');
+            const authButtons = document.getElementById('authButtons');
+            const userButtons = document.getElementById('userButtons');
+            const adminBtn = document.getElementById('adminBtn');
 
-            authButtons.style.display = 'none';
-            userButtons.style.display = 'flex';
+            if (token && username) {
+                statusDiv.className = 'status logged-in';
+                statusDiv.style.display = 'block';
+                statusDiv.innerHTML = `👤 Xin chào, <strong>${username}</strong>! Bạn đang đăng nhập.`;
 
-            if (roles.includes('ROLE_ADMIN')) {
-                adminBtn.style.display = 'inline-block';
+                authButtons.style.display = 'none';
+                userButtons.style.display = 'flex';
+
+                if (roles.includes('ROLE_ADMIN')) {
+                    adminBtn.style.display = 'inline-block';
+                }
+            } else {
+                statusDiv.className = 'status logged-out';
+                statusDiv.style.display = 'block';
+                statusDiv.innerHTML = 'Bạn chưa đăng nhập.';
+                authButtons.style.display = 'flex';
+                userButtons.style.display = 'none';
+                adminBtn.style.display = 'none';
             }
-        } else {
-            statusDiv.className = 'status logged-out';
-            statusDiv.style.display = 'block';
-            statusDiv.textContent = 'Bạn chưa đăng nhập. Vui lòng đăng nhập để tiếp tục.';
-
-            authButtons.style.display = 'flex';
-            userButtons.style.display = 'none';
         }
-    }
 
     function logout() {
         if (confirm('Bạn có chắc muốn đăng xuất?')) {
