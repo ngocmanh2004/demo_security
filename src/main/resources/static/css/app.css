@@ -176,4 +176,40 @@ body.centered-page{ min-height:100vh; display:flex; align-items:center; justify-
 /* Slight tweaks for admin buttons inside table to look compact */
 .btn-edit, .btn-delete{ padding:6px 8px }
 
-/* End of added refinements */
+/* Register page specific overrides (compact, final) */
+body.register-page .container.card{
+  max-width:360px;        /* compact width */
+  width:86%;              /* responsive width on medium screens */
+  padding:14px 16px;      /* compact padding */
+  border-radius:10px;
+  box-shadow: 0 8px 18px rgba(15,23,36,0.035);
+}
+
+body.register-page .container.card h2{
+  font-size:17px;    /* smaller heading */
+  margin-bottom:10px;
+}
+
+body.register-page .form-group{ margin-bottom:10px }
+body.register-page .form-group label{ font-size:13px; }
+body.register-page input, body.register-page textarea{ padding:8px 10px; border-radius:8px; font-size:14px }
+body.register-page .btn{ padding:8px 12px; border-radius:8px; font-size:14px }
+
+@media (max-width:900px){
+  body.register-page .container.card{ max-width:360px; width:92%; padding:12px }
+}
+@media (max-width:480px){
+  body.register-page .container.card{ max-width:100%; padding:10px; border-radius:10px }
+  body.register-page .container.card h2{ font-size:16px }
+}
+
+/* End compact register overrides */
+
+/* Admin product thumbnail in table */
+.thumb-cell{ width:72px; padding:6px; }
+.thumb-wrap{ width:56px; height:40px; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:8px; background:var(--muted-bg); }
+.thumb-wrap img{ width:100%; height:100%; object-fit:cover; display:block }
+.product-name-cell{ vertical-align:middle; }
+
+/* ensure actions column doesn't wrap buttons */
+td.actions{ white-space:nowrap }

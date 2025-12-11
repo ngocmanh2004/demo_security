@@ -16,6 +16,7 @@
     <h1 th:text="#{title.admin}">Quản trị viên - Quản lý sản phẩm</h1>
     <div class="navbar-right">
         <div style="margin-right:8px;">
+            <a href="/products.html" style="margin-right:12px; color: #e6eef8">Trang sản phẩm</a>
             <a href="?lang=vi" style="margin-right:8px; color: #e6eef8">VI</a>
             <a href="?lang=en" style="color: #e6eef8">EN</a>
         </div>
@@ -42,6 +43,7 @@
                 <thead>
                 <tr>
                     <th id="th-id">ID</th>
+                    <th id="th-thumb">Ảnh</th>
                     <th id="th-name">Tên sản phẩm</th>
                     <th id="th-price">Giá</th>
                     <th id="th-stock">Số lượng</th>
@@ -186,14 +188,19 @@
         table.style.display = 'table';
 
         if (!products || products.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">${lang === 'en' ? 'No products yet' : 'Chưa có sản phẩm nào'}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">${lang === 'en' ? 'No products yet' : 'Chưa có sản phẩm nào'}</td></tr>`;
             return;
         }
 
         tbody.innerHTML = products.map(p => `
             <tr>
                 <td>${p.productID}</td>
-                <td>${p.productName || (lang === 'en' ? 'N/A' : 'Không có tên')}</td>
+                <td class="thumb-cell">
+                    <div class="thumb-wrap">
+                        <img src="${p.imageUrl || ''}" alt="" onerror="this.onerror=null;this.src='/images/placeholder-product.svg'" />
+                    </div>
+                </td>
+                <td class="product-name-cell">${p.productName || (lang === 'en' ? 'N/A' : 'Không có tên')}</td>
                 <td>${p.price ? Number(p.price).toLocaleString(lang === 'en' ? 'en-US' : 'vi-VN') + ' ₫' : (lang === 'en' ? 'N/A' : 'Không rõ')}</td>
                 <td>${p.stockQuantity || 0}</td>
                 <td>${p.categoryName || (lang === 'en' ? 'N/A' : 'Không rõ')}</td>

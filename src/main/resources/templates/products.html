@@ -14,9 +14,11 @@
 <div class="navbar">
     <h1 th:text="#{title.home}">Cửa hàng của chúng tôi</h1>
     <div class="navbar-right">
-        <div style="margin-right:8px; color:#e6eef8;">
-            <a href="?lang=vi" style="margin-right:8px; color:#e6eef8;">VI</a>
-            <a href="?lang=en" style="color:#e6eef8;">EN</a>
+        <div style="margin-right:8px;">
+            <a id="adminLink" href="/admin.html" style="margin-right:12px; color: #e6eef8; display:none">Admin</a>
+            <a href="/products.html" style="margin-right:12px; color: #e6eef8">Trang sản phẩm</a>
+            <a href="?lang=vi" style="margin-right:8px; color: #e6eef8">VI</a>
+            <a href="?lang=en" style="color: #e6eef8">EN</a>
         </div>
         <div class="user-info" style="color:#e6eef8; margin-right:8px;">
             <span id="username"></span>
@@ -54,6 +56,16 @@
 
         if (document.getElementById('username')) document.getElementById('username').textContent = username;
         if (document.getElementById('role')) document.getElementById('role').textContent = roleText;
+
+        // Show admin link only for admin/manager roles
+        const adminLink = document.getElementById('adminLink');
+        if (adminLink) {
+            if (roles.includes('ROLE_ADMIN') || roles.includes('ROLE_MANAGER')) {
+                adminLink.style.display = 'inline';
+            } else {
+                adminLink.style.display = 'none';
+            }
+        }
 
         if (!token) {
             window.location.href = 'login.html';
